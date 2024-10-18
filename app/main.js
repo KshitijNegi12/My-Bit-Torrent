@@ -59,7 +59,7 @@ function decodeBencode(bencodedValue) {
     return chkString(bencodedValue);
   }
   else if (bencodedValue[0] == 'i'){
-    return chkInterger(bencodedValue.slice(1));
+    return chkInterger(bencodedValue);
   } 
   else if(bencodedValue[0] == 'l'){
     return chkList(bencodedValue.slice(1));
