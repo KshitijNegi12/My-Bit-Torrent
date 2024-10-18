@@ -6,7 +6,7 @@ const util = require("util");
 // - decodeBencode("10:hello12345") -> "hello12345"
 function decodeBencode(bencodedValue) {
   // Check if the first character is a digit
-  if (bencodedValue[0] == 'i' && bencodedValue[-1] == 'e') {
+  if (bencodedValue[0] == 'i' && bencodedValue[bencodedValue.length-1] == 'e') {
     let intergerValue = +bencodedValue.slice(1,-1);
     if (isNaN(intergerValue)) {
       throw new Error("Invalid encoded value");
