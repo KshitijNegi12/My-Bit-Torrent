@@ -4,22 +4,63 @@ const util = require("util");
 // Examples:
 // - decodeBencode("5:hello") -> "hello"
 // - decodeBencode("10:hello12345") -> "hello12345"
-function decodeBencode(bencodedValue) {
-  // Check if the first character is a digit
-  if (!isNaN(bencodedValue[0])) {
-    const firstColonIndex = bencodedValue.indexOf(":");
-    if (firstColonIndex === -1) {
+function chkString(bencodedValue){
+  const firstColonIndex = bencodedValue.indexOf(":");
+  if (firstColonIndex === -1) {
+    throw new Error("Invalid encoded value");
+  }
+  else
+    return bencodedValue.slice(firstColonIndex+1, firstColonIndex+1 + +bencodedValue.slice(0,firstColonIndex));
+}
+
+function chkInterger(bencodedValue){
+  let firstE = bencodedValue.indexOf('e')
+    if(firstE === -1){
       throw new Error("Invalid encoded value");
     }
-    return bencodedValue.substr(firstColonIndex + 1);
-  }
-  else if (bencodedValue[0] == 'i' && bencodedValue[bencodedValue.length-1] == 'e') {
-    let intergerValue = +bencodedValue.slice(1,-1);
+    let intergerValue = +bencodedValue.slice(1, firstE);
     if (isNaN(intergerValue)) {
       throw new Error("Invalid encoded value");
     }
-    return intergerValue;
+    else
+      return intergerValue;
+}
+
+function chkList(bencodedValue){
+  let resultList = [];
+  if(bencodedValue[bencodedValue.length-1] == 'e'){
+    let start = 1, end = bencodedValue.length-2;
+    while(start < end){
+      if(!isNaN(bencodedValue[start])){
+        resultList.push(chkString(bencodedValue.slice(start)));
+        let vals = bencodedValue.slice(start, bencodedValue.indexOf(":", start));        
+        start = start + Number(vals) + vals.length + 1;
+      }
+      else if(bencodedValue[start] == 'i'){
+        resultList.push(chkInterger(bencodedValue.slice(start)))
+        let firstE = bencodedValue.indexOf('e', start);
+        start = firstE + 1;
+      }
+      else{
+        throw new Error("Invalid encoded value");
+      }
+    }
+  }
+  return resultList;
+  
+}
+
+function decodeBencode(bencodedValue) {
+  // Check if the first character is a digit
+  if(!isNaN(bencodedValue[0])){
+    return chkString(bencodedValue);
+  }
+  else if (bencodedValue[0] == 'i'){
+    return chkInterger(bencodedValue);
   } 
+  else if(bencodedValue[0] == 'l'){
+    return chkList(bencodedValue);
+  }
   else {
     throw new Error("Only strings are supported at the moment");
   }
