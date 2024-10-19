@@ -1,6 +1,7 @@
 const process = require("process");
 const util = require("util");
 const fs = require('fs');
+const crypto = require('crypto')
 
 let skips = -1;
 // strings
@@ -132,6 +133,10 @@ function main() {
       let dict = decodeBencode(data.toString());      
       console.log("Tracker URL: " + dict['announce']);
       console.log("Length: " + dict['info']['length']);
+      let hash = crypto.createHash('sha1');
+      hash.update(JSON.stringify(dict['info']));
+      let digest = hash.digest();
+      console.log("Info Hash: " + digest.toString('hex'));
     })
   } 
   else {
