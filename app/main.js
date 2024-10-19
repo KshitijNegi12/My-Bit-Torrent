@@ -131,6 +131,7 @@ function main() {
       }    
       let dict = decodeBencode(data.toString());      
       console.log("Tracker URL: " + dict['announce']);
+      console.log("Length: " + dict['info']['length']);
     })
   } 
   else {
