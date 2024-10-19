@@ -76,6 +76,10 @@ function chkDict(bencodedValue, st){
       val = chkList(bencodedValue, start);
       start += skips;
     }
+    else if(bencodedValue[start] == 'd'){
+      val = chkDict(bencodedValue, start);
+      start += skips;
+    }
     else{
       throw new Error("Invalid encoded value");
     }
@@ -88,6 +92,7 @@ function chkDict(bencodedValue, st){
       getKey = true;
     }
   }
+  skips = start - st + 1;
   return resultDict;
 }
 
