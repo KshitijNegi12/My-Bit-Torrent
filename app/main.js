@@ -1,5 +1,7 @@
 const process = require("process");
 const util = require("util");
+const parseTorrent = require('parse-torrent');
+const fs = require('fs');
 
 let skips = -1;
 // strings
@@ -115,13 +117,34 @@ function decodeBencode(bencodedValue) {
   }
 }
 
+// readfile
+function readFile(torrentFile){
+  fs.readFile(torrentFile,(err,data)=>{
+    if(err){
+      throw new Error('Error in reading torrent file. ', err);
+    }
+    try{
+      const parsedTorrent = parseTorrent(data);
+      return parsedTorrent;
+    }
+    catch(err){
+      throw new Error('Error in parsing torrent file. ', err);
+    }
+  })
+}
+
 // main
 function main() {
   const command = process.argv[2];
   if (command === "decode") {
     const bencodedValue = process.argv[3];
     console.log(JSON.stringify(decodeBencode(bencodedValue)));
-  } else {
+  }
+  else if(command == 'info'){
+    const torrentFile = process.argv[3];
+    console.log(JSON.stringify(readFile(torrentFile)));
+  } 
+  else {
     throw new Error(`Unknown command ${command}`);
   }
 }
