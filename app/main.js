@@ -129,7 +129,8 @@ function main() {
       if(err){
         throw new Error('Error in reading torrent file. ', err);
       }    
-      console.log(JSON.stringify(decodeBencode(data.toString())));
+      let dict = decodeBencode(data.toString());      
+      console.log(JSON.stringify({"Tracker URL":dict['announce']}));
     })
   } 
   else {
