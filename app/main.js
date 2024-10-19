@@ -1,86 +1,120 @@
 const process = require("process");
 const util = require("util");
 
-// Examples:
-// - decodeBencode("5:hello") -> "hello"
-// - decodeBencode("10:hello12345") -> "hello12345"
-let skipPos = -1;
-function chkString(bencodedValue){
-  const firstColonIndex = bencodedValue.indexOf(":");
+let skips = -1;
+// strings
+function chkString(bencodedValue, st){
+  const firstColonIndex = bencodedValue.indexOf(":", st);
   if (firstColonIndex === -1) {
     throw new Error("Invalid encoded value");
   }
-  else
-    return bencodedValue.slice(firstColonIndex+1, firstColonIndex+1 + +bencodedValue.slice(0,firstColonIndex));
+  const startingNum = bencodedValue.slice(st,firstColonIndex);
+  if(isNaN(startingNum)){
+    throw new Error("Invalid encoded value");
+  }
+  let res = bencodedValue.slice(firstColonIndex+1, firstColonIndex+1 + +startingNum);
+  skips = res.length + startingNum.length + 1;
+  return res;
 }
 
-function chkInterger(bencodedValue){
-  let firstE = bencodedValue.indexOf('e')
+// integers
+function chkInteger(bencodedValue, st){
+  let firstE = bencodedValue.indexOf('e', st);
   if(firstE === -1){
     throw new Error("Invalid encoded value");
   }
-  let intergerValue = bencodedValue.slice(1, firstE);
+  let intergerValue = bencodedValue.slice(st+1, firstE);
   if (isNaN(intergerValue)) {
     throw new Error("Invalid encoded value");
   }
-  else
+  skips = intergerValue.length + 2;  
   return +intergerValue;
 }
 
-function chkList(bencodedValue){
+// lists
+function chkList(bencodedValue, st){
   let resultList = [];
-  let start = 0, end = bencodedValue.length;
+  let start = st+1, end = bencodedValue.length;
   while(start < end && bencodedValue[start] != 'e'){
     if(!isNaN(bencodedValue[start])){
-      resultList.push(chkString(bencodedValue.slice(start)));
-      let vals = bencodedValue.slice(start, bencodedValue.indexOf(":", start));        
-      start = start + Number(vals) + vals.length + 1;
+      resultList.push(chkString(bencodedValue, start));
+      start += skips;
     }
     else if(bencodedValue[start] == 'i'){
-      resultList.push(chkInterger(bencodedValue.slice(start)))
-      let firstE = bencodedValue.indexOf('e', start);
-      start = firstE + 1;
+      resultList.push(chkInteger(bencodedValue, start));
+      start += skips;
     }
     else if(bencodedValue[start] == 'l'){
-      resultList.push(chkList(bencodedValue.slice(start+1)));
-      start = start + skipPos + 1;
+      resultList.push(chkList(bencodedValue, start));
+      start += skips;
     }
     else{
       throw new Error("Invalid encoded value");
     }
   }
-  skipPos = start + 1;
+  skips = start - st + 1;
   return resultList;
 }
 
+// dicts
+function chkDict(bencodedValue, st){
+  let resultDict = {};
+  let key = null;
+  let getKey = true;
+  let start = st+1, end = bencodedValue.length;
+  while(start < end && bencodedValue[start] != 'e'){
+    let val = null;
+    if(!isNaN(bencodedValue[start])){
+      val = chkString(bencodedValue, start);
+      start += skips;
+    }
+    else if(bencodedValue[start] == 'i'){
+      val = chkInteger(bencodedValue, start);
+      start += skips;
+    }
+    else if(bencodedValue[start] == 'l'){
+      val = chkList(bencodedValue, start);
+      start += skips;
+    }
+    else{
+      throw new Error("Invalid encoded value");
+    }
+    if(getKey){
+      key = val;
+      getKey = false;
+    }
+    else{
+      resultDict[key] = val;
+      getKey = true;
+    }
+  }
+  return resultDict;
+}
+
+// decode
 function decodeBencode(bencodedValue) {
-  // Check if the first character is a digit
   if(!isNaN(bencodedValue[0])){
-    return chkString(bencodedValue);
+    return chkString(bencodedValue, 0);
   }
   else if (bencodedValue[0] == 'i'){
-    return chkInterger(bencodedValue);
+    return chkInteger(bencodedValue, 0);
   } 
   else if(bencodedValue[0] == 'l'){
-    return chkList(bencodedValue.slice(1));
+    return chkList(bencodedValue, 0);
+  }
+  else if(bencodedValue[0] == 'd'){
+    return chkDict(bencodedValue, 0);
   }
   else {
     throw new Error("Only strings are supported at the moment");
   }
 }
 
+// main
 function main() {
   const command = process.argv[2];
-
-  // You can use print statements as follows for debugging, they'll be visible when running tests.
-  // console.log("Logs from your program will appear here!");
-
-  // Uncomment this block to pass the first stage
   if (command === "decode") {
     const bencodedValue = process.argv[3];
-  
-  //   // In JavaScript, there's no need to manually convert bytes to string for printing
-  //   // because JS doesn't distinguish between bytes and strings in the same way Python does.
     console.log(JSON.stringify(decodeBencode(bencodedValue)));
   } else {
     throw new Error(`Unknown command ${command}`);
