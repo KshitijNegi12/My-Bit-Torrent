@@ -98,6 +98,30 @@ function chkDict(bencodedValue, st){
   return resultDict;
 }
 
+// bencode
+function bencode(input) {
+  if (Number.isFinite(input)) {
+    return `i${input}e`;
+  } 
+  else if (typeof input === "string") {
+    return `${input.length}:` + input;
+  } 
+  else if (Array.isArray(input)) {
+    let l = "";
+    input.forEach(ele => {
+      l = l + bencode(ele)
+    });
+    return `l${l}e`;
+  } 
+  else{
+    let d = ""
+    Object.keys(input).forEach(key=>{
+      d = d + bencode(key) + bencode(input[key])
+    })
+    return `d${d}e`;
+  }
+}
+
 // decode
 function decodeBencode(bencodedValue) {
   if(!isNaN(bencodedValue[0])){
@@ -130,13 +154,16 @@ function main() {
       if(err){
         throw new Error('Error in reading torrent file. ', err);
       }    
-      let dict = decodeBencode(data.toString());      
+
+      let dict = decodeBencode(data.toString("binary"));    
       console.log("Tracker URL: " + dict['announce']);
       console.log("Length: " + dict['info']['length']);
-      let hash = crypto.createHash('sha1');
-      hash.update(JSON.stringify(dict['info']));
-      let digest = hash.digest();
-      console.log("Info Hash: " + digest.toString('hex'));
+
+      let hash = crypto.createHash('sha1');      
+      let infoBencode = bencode(dict.info)
+      hash.update(Buffer.from(infoBencode, 'binary'));
+      let digest = hash.digest('hex');
+      console.log("Info Hash: " + digest);
     })
   } 
   else {
