@@ -164,6 +164,15 @@ function main() {
       hash.update(Buffer.from(infoBencode, 'binary'));
       let digest = hash.digest('hex');
       console.log("Info Hash: " + digest);
+      console.log("Piece Length: " + dict.info["piece length"]);
+      console.log('Piece Hashes:');
+      let pieces = Buffer.from(dict.info.pieces, 'binary');
+      let st = 0;
+      while(st < pieces.length){
+        let subpart = pieces.slice(st, st+20);
+        console.log(subpart.toString('hex'));
+        st += 20;
+      }
     })
   } 
   else {
